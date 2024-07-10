@@ -1,0 +1,80 @@
+.banner-container {
+  width: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.banner-slide {
+  position: relative;
+}
+
+.banner-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  display: block; /* Elimina cualquier espacio extra debajo de la imagen */
+}
+
+.banner-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 10px;
+  margin: 0;
+}
+
+/* Estilos para los puntos del carrusel */
+.slick-dots {
+  bottom: 10px;
+}
+
+.slick-dots li button:before {
+  color: white;
+}
+
+/* Ajuste para dispositivos móviles */
+@media (max-width: 600) {
+  .banner-container-mobile {
+    margin-top: 0 !important; /* Cambiado a 0 */
+    padding-top: 0 !important;
+  }
+
+  .banner-container {
+    padding-top: 0;
+    margin-top: 0;
+  }
+
+  .banner-image {
+    height: auto;
+    max-height: 200px;
+    object-fit: cover;
+  }
+
+  /* Ajustes adicionales para eliminar espacios */
+  .slick-slider {
+    margin-bottom: 0;
+  }
+
+  .slick-list {
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .slick-track {
+    margin-top: 0;
+  }
+}
+
+/* Estilos globales para eliminar márgenes y paddings no deseados */
+body, html {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}

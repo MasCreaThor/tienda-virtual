@@ -1,0 +1,15 @@
+/* Categorias.css */
+.product-detail-image {
+    object-fit: contain;
+  }
+  
+  .related-product-image {
+    object-fit: cover;
+  }
+  
+  .related-product-name {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  

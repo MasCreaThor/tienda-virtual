@@ -1,0 +1,89 @@
+/* assets/ProductDetail.css */
+
+.product-detail {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.product-detail-card {
+  margin-bottom: 2rem;
+}
+
+.product-detail-image {
+  width: 100%;
+  height: auto;
+  max-height: 400px; /* Limita la altura máxima de la imagen */
+  object-fit: contain; /* Asegura que la imagen se ajuste completamente dentro del contenedor */
+  border: 1px solid #ddd; /* Añade un borde sutil para mayor claridad */
+  border-radius: 4px; /* Añade esquinas redondeadas */
+  background-color: #f8f8f8; /* Añade un fondo claro para mayor contraste */
+}
+
+.related-product-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.related-product-image {
+  width: 100%;
+  height: 200px; /* Ajusta la altura de las imágenes relacionadas */
+  object-fit: cover;
+}
+
+.product-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.product-actions .ml-2 {
+  margin-left: 1rem;
+}
+
+@media (max-width: 600px) {
+  .product-detail {
+    padding: 0.5rem;
+  }
+}
+
+.alert-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  z-index: 999;
+}
+
+.alert-message.show {
+  opacity: 1;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.fade-out {
+  animation: fadeOut 4s forwards;
+}
+.product-detail .related-product-card {
+  transition: transform 0.3s ease;
+}
+
+.product-detail .related-product-card:hover {
+  transform: scale(1.03);
+}
+
+.related-product-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

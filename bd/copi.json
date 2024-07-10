@@ -1,0 +1,115 @@
+{
+  "administradores": {
+    "Yadir": {
+      "contraseña": "yadir12",
+      "correo": "yadamuoz@misena.edu.co",
+      "nombre": "Yadir"
+    }
+  },
+  "categorias": {
+    "-M_JbbRz27iYDg5vt4H3": {
+      "descripcion": "Productos electrónicos",
+      "nombre": "Electrodomesticos",
+      "imagen": "https://example.com/electrodomesticos.jpg"
+    },
+    "-M_KF-PY3nY6KsLHc8Aj": {
+      "descripcion": "Ropa deportiva",
+      "nombre": "Deportiva",
+      "imagen": "https://example.com/deportiva.jpg"
+    },
+    "-O-ddrHRrTd1tcBepvaN": {
+      "descripcion": "Juguetes para niños",
+      "nombre": "Juguetes",
+      "imagen": "https://example.com/juguetes.jpg"
+    }
+  },
+  "clientes": {
+    "-M_Jdf7vJj77TolWdgrw": {
+      "direccion": "Calle 123",
+      "id_ciudad": "1",
+      "id_departamento": "-M_Jcc0t3qfHyY9aIyH9",
+      "id_pais": "-M_JaYiNTDPp9bSHw9Lg",
+      "nombre": "Juan Pérez",
+      "telefono": "123456789"
+    }
+  },
+  "departamentos": {
+    "-M_Jcc0t3qfHyY9aIyH9": {
+      "id_pais": "-M_JaYiNTDPp9bSHw9Lg",
+      "nombre": "Antioquia"
+    },
+    "-M_KWzEJ23dE7WzS0-DI": {
+      "id_pais": "-M_KWE4WqMm3i00nS1-s",
+      "nombre": "California"
+    }
+  },
+  "detalles_pedido": {
+    "-M_L6D4hUQH_vUc2pG7S": {
+      "cantidad": "4",
+      "id_estado": "1",
+      "id_pedido": "-M_Jdf7vJj77TolWdgrw",
+      "id_producto": "-O-dfLSjE4J_ap4ILcXw",
+      "precio": "200"
+    }
+  },
+  "estados_pedido": [
+    null,
+    {
+      "estado": "proceso"
+    },
+    {
+      "estado": "enviado"
+    },
+    {
+      "estado": "entregado"
+    }
+  ],
+  "paises": {
+    "-M_JaYiNTDPp9bSHw9Lg": {
+      "nombre": "Colombia"
+    },
+    "-M_KWE4WqMm3i00nS1-s": {
+      "nombre": "Estados Unidos"
+    }
+  },
+  "pedidos": {
+    "-M_Jdf7vJj77TolWdgrw": {
+      "fecha_pedido": "2024-06-16",
+      "id_cliente": "-M_Jdf7vJj77TolWdgrw"
+    }
+  },
+  "productos": {
+    "-O-dEbeYQJTsUWZXzKOg": {
+      "cantidad": "3",
+      "categoriaId": "-M_KF-PY3nY6KsLHc8Aj",
+      "descripcion": "Licra para dama deportiva",
+      "id": "-O-dEbeYQJTsUWZXzKOg",
+      "id_categoria": "-M_KF-PY3nY6KsLHc8Aj",
+      "id_proveedor": "-O-dNstmIEFBkTMU653F",
+      "imagen": "https://imbictoz.com/wp-content/uploads/2023/04/camiseta-fc-barcelona-2008-2009.jpeg",
+      "nombre": "Licra deportiva",
+      "precio": "50",
+      "proveedorId": "-O-dgI1R37DsDLl886p9"
+    },
+    "-O-dfLSjE4J_ap4ILcXw": {
+      "cantidad": "1",
+      "categoriaId": "-O-ddrHRrTd1tcBepvaN",
+      "descripcion": "Carro para niños pequeños",
+      "id": "-O-dfLSjE4J_ap4ILcXw",
+      "imagen": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH_hpRNQs6usHjhqw79gxBZU7EpxD1pqsNgA&s",
+      "nombre": "Carro",
+      "precio": "100",
+      "proveedorId": "-O-dNstmIEFBkTMU653F"
+    }
+  },
+  "proveedores": {
+    "-O-dNstmIEFBkTMU653F": {
+      "nombre": "Yenifer Tatiana Fonaseca",
+      "telefono": "3202489976"
+    },
+    "-O-dgI1R37DsDLl886p9": {
+      "nombre": "Yadir Adrian Muñoz",
+      "telefono": "3184750620"
+    }
+  }
+}

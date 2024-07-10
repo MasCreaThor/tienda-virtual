@@ -1,0 +1,34 @@
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Evita el scroll vertical */
+    background: linear-gradient(135deg, #33c3fc, #c1cde8, #93cbfa, #e4d9ff);
+    background-size: 400% 100%;
+    animation: gradientAnimation 15s infinite alternate;
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  @keyframes gradientAnimation {
+    0% {
+      background-position: 0% 50%;
+    }
+    25% {
+      background-position: 50% 100%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    75% {
+      background-position: 50% 0%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
