@@ -10,14 +10,56 @@ import {
   Paper, 
   TextField, 
   Button, 
-  Typography 
+  Typography,
+  Box,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { getDatabase, ref, get, remove } from 'firebase/database';
+import { styled } from '@mui/material/styles';
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  '&.MuiTableCell-head': {
+    backgroundColor: theme.palette.common.black,
+    color: theme.palette.common.white,
+    fontWeight: 'bold',
+    fontSize: '0.9rem',
+  },
+  '&.MuiTableCell-body': {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}));
+
+const ScrollableTableContainer = styled(TableContainer)(({ theme }) => ({
+  maxWidth: '100%',
+  overflowX: 'auto',
+  '&::-webkit-scrollbar': {
+    height: '8px',
+  },
+  '&::-webkit-scrollbar-track': {
+    backgroundColor: theme.palette.grey[300],
+  },
+  '&::-webkit-scrollbar-thumb': {
+    backgroundColor: theme.palette.primary.main,
+    borderRadius: '4px',
+  },
+}));
 
 const Clientes = () => {
   const [clientes, setClientes] = useState([]);
   const [filteredClientes, setFilteredClientes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     fetchClientes();
@@ -79,7 +121,11 @@ const Clientes = () => {
   };
 
   return (
-    <div>
+    <Box sx={{ 
+      width: '100%', 
+      px: isMobile ? 2 : 0, // Padding horizontal en móviles
+      pr: isMobile ? 2 : 3, // Padding derecho en escritorio
+    }}>
       <Typography variant="h4" gutterBottom>
         Clientes Registrados
       </Typography>
@@ -91,41 +137,42 @@ const Clientes = () => {
         value={searchTerm}
         onChange={handleSearch}
       />
-      <TableContainer component={Paper}>
-        <Table>
+      <ScrollableTableContainer component={Paper}>
+        <Table sx={{ minWidth: 650 }}>
           <TableHead>
-            <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Apellido</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Teléfono</TableCell>
-              <TableCell>Documento</TableCell>
-              <TableCell>Acciones</TableCell>
-            </TableRow>
+            <StyledTableRow>
+              <StyledTableCell>Nombre</StyledTableCell>
+              <StyledTableCell>Apellido</StyledTableCell>
+              <StyledTableCell>Email</StyledTableCell>
+              <StyledTableCell>Teléfono</StyledTableCell>
+              <StyledTableCell>Documento</StyledTableCell>
+              <StyledTableCell>Acciones</StyledTableCell>
+            </StyledTableRow>
           </TableHead>
           <TableBody>
             {filteredClientes.map((cliente) => (
-              <TableRow key={cliente.id}>
-                <TableCell>{cliente.fullName}</TableCell>
-                <TableCell>{cliente.lastName}</TableCell>
-                <TableCell>{cliente.email}</TableCell>
-                <TableCell>{cliente.phone}</TableCell>
-                <TableCell>{cliente.recipientDocument || 'N/A'}</TableCell>
-                <TableCell>
+              <StyledTableRow key={cliente.id}>
+                <StyledTableCell>{cliente.fullName}</StyledTableCell>
+                <StyledTableCell>{cliente.lastName}</StyledTableCell>
+                <StyledTableCell>{cliente.email}</StyledTableCell>
+                <StyledTableCell>{cliente.phone}</StyledTableCell>
+                <StyledTableCell>{cliente.recipientDocument || 'N/A'}</StyledTableCell>
+                <StyledTableCell>
                   <Button 
                     variant="contained" 
                     color="error" 
                     onClick={() => handleDeleteCliente(cliente.id)}
+                    size="small"
                   >
                     Eliminar
                   </Button>
-                </TableCell>
-              </TableRow>
+                </StyledTableCell>
+              </StyledTableRow>
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
-    </div>
+      </ScrollableTableContainer>
+    </Box>
   );
 };
 

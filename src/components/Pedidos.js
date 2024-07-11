@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ref, onValue, update, get } from 'firebase/database';
+import { ref, onValue, update } from 'firebase/database';
 import { db } from './config/firebaseConfig';
 import {
   Container, Typography, Tabs, Tab, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -98,7 +98,6 @@ const Pedidos = () => {
 
   const updateOrderStatus = () => {
     if (newStatus === 'processing' && selectedOrder.status === 'pending') {
-      // Verificar stock antes de procesar
       const orderItems = selectedOrder.items;
       let canProcess = true;
       const updates = {};
@@ -114,7 +113,6 @@ const Pedidos = () => {
             setSnackbarOpen(true);
             return;
           }
-          // Preparar actualización de stock
           const newStock = currentStock - orderedQuantity;
           updates[`productos/${item.productoId}/stock`] = newStock.toString();
         }
@@ -124,7 +122,6 @@ const Pedidos = () => {
         return;
       }
 
-      // Actualizar el estado del pedido y el stock de los productos
       updates[`orders/${selectedOrder.id}/status`] = newStatus;
       
       update(ref(db), updates)
@@ -140,7 +137,6 @@ const Pedidos = () => {
           setSnackbarOpen(true);
         });
     } else {
-      // Para otros cambios de estado, solo actualizar el estado del pedido
       const orderRef = ref(db, `orders/${selectedOrder.id}`);
       update(orderRef, { status: newStatus })
         .then(() => {
@@ -187,15 +183,15 @@ const Pedidos = () => {
     <TableContainer component={Paper}>
       <Table>
         <TableHead>
-          <TableRow>
-            <TableCell>ID Pedido</TableCell>
-            <TableCell>Pedido</TableCell>
-            <TableCell>Fecha</TableCell>
-            <TableCell>Total</TableCell>
-            <TableCell>Método de Pago</TableCell>
-            <TableCell>Cliente</TableCell>
-            <TableCell>Comprobante</TableCell>
-            <TableCell>Acciones</TableCell>
+          <TableRow sx={{ backgroundColor: 'rgba(0, 132, 255, 0.788);' }}>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>ID Pedido</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Pedido</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Fecha</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Método/Pago</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Cliente</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Comprobante</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Acciones</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -208,7 +204,7 @@ const Pedidos = () => {
                 </Button>
               </TableCell>
               <TableCell>{formatDate(order.createdAt)}</TableCell>
-              <TableCell>{order.total}</TableCell>
+              <TableCell>{Number(order.total).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</TableCell>
               <TableCell>{order.paymentMethod}</TableCell>
               <TableCell>
                 <Button onClick={() => handleOpenClientDetails(order)}>
@@ -290,49 +286,68 @@ const Pedidos = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openOrderDetails} onClose={handleCloseOrderDetails} maxWidth="md" fullWidth>
+      <Dialog 
+        open={openOrderDetails} 
+        onClose={handleCloseOrderDetails} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          style: {
+            maxHeight: '90vh',
+            overflowY: 'auto',
+          },
+        }}
+      >
         <DialogTitle>Detalles del Pedido</DialogTitle>
         <DialogContent>
-          {selectedOrder && selectedOrder.items && selectedOrder.items.map((item, index) => {
-            const producto = productos[item.productoId] || {};
-            const proveedor = proveedores[producto.proveedor] || {};
-            const categoria = categorias[producto.categoria] || {};
-            return (
-              <Card key={index} sx={{ display: 'flex', mb: 2 }}>
-                <CardMedia
-                  component="img"
-                  sx={{ width: 151 }}
-                  image={item.imagenes && item.imagenes[0] ? item.imagenes[0] : producto.imagenes && producto.imagenes[0]}
-                  alt={item.nombre || producto.nombre}
-                />
-                <CardContent sx={{ flex: '1 0 auto' }}>
-                  <Typography component="div" variant="h5">
-                    {item.nombre || producto.nombre}
-                  </Typography>
-                  <Typography variant="subtitle1" color="text.secondary" component="div">
-                    Talla: {item.talla}, Color: {item.color || 'N/A'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Cantidad: {item.cantidad}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Proveedor: {proveedor.nombre || 'N/A'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Categoría: {categoria.nombre || 'N/A'}
-                  </Typography>
-                  {proveedor.telefono && (
-                    <Button 
-                      startIcon={<WhatsAppIcon />} 
-                      onClick={() => window.open(`https://wa.me/${proveedor.telefono}`, '_blank')}
-                    >
-                      Contactar proveedor
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {selectedOrder && selectedOrder.items && selectedOrder.items.map((item, index) => {
+              const producto = productos[item.productoId] || {};
+              const proveedor = proveedores[producto.proveedor] || {};
+              const categoria = categorias[producto.categoria] || {};
+              return (
+                <Card key={index} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
+                  <CardMedia
+                    component="img"
+                    sx={{ 
+                      width: { xs: '100%', sm: 151 }, 
+                      height: { xs: 200, sm: 'auto' },
+                      objectFit: 'cover'
+                    }}
+                    image={item.imagenes && item.imagenes[0] ? item.imagenes[0] : producto.imagenes && producto.imagenes[0]}
+                    alt={item.nombre || producto.nombre}
+                  />
+                  <CardContent sx={{ flex: '1 0 auto' }}>
+                    <Typography component="div" variant="h6">
+                      {item.nombre || producto.nombre}
+                    </Typography>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Talla: {item.talla}, Color: {item.color || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2">
+                      Cantidad: {item.cantidad}
+                    </Typography>
+                    <Typography variant="body2">
+                      Proveedor: {proveedor.nombre || 'N/A'}
+                    </Typography>
+                    <Typography variant="body2">
+                      Categoría: {categoria.nombre || 'N/A'}
+                    </Typography>
+                    {proveedor.telefono && (
+                      <Button 
+                        startIcon={<WhatsAppIcon />} 
+                        onClick={() => window.open(`https://wa.me/${proveedor.telefono}`, '_blank')}
+                        size="small"
+                        sx={{ mt: 1 }}
+                      >
+                        Contactar proveedor
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseOrderDetails}>Cerrar</Button>
@@ -352,7 +367,7 @@ const Pedidos = () => {
               <Typography>{selectedOrder.shippingInfo.city}, {selectedOrder.shippingInfo.department}</Typography>
               <Typography>{selectedOrder.shippingInfo.country}</Typography>
               <Typography>Detalles: {selectedOrder.shippingInfo.details}</Typography>
-              <Typography>Documento de quien recibe: {users[selectedOrder.userId].recipientDocument}</Typography>
+              <Typography>Documento de quien recibe: {selectedOrder.shippingInfo.recipientDocument}</Typography>
             </Box>
           )}
         </DialogContent>

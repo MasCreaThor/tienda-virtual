@@ -13,6 +13,10 @@ const SuccessScreen = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const formatPrice = (price) => {
+    return price.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  };
+
   useEffect(() => {
     const fetchOrderDetails = async () => {
       setLoading(true);
@@ -42,7 +46,12 @@ const SuccessScreen = () => {
               const providerSnapshot = await get(providerRef);
               if (providerSnapshot.exists()) {
                 const providerData = providerSnapshot.val();
-                return { ...item, proveedor: productData.proveedor, proveedorTelefono: providerData.telefono };
+                return { 
+                  ...item, 
+                  proveedor: productData.proveedor, 
+                  proveedorTelefono: providerData.telefono,
+                  subtotal: item.precio * item.cantidad 
+                };
               }
             }
             return item;
@@ -67,12 +76,13 @@ const SuccessScreen = () => {
     if (!orderDetails) return;
 
     const itemsForProvider = orderDetails.items.filter(item => item.proveedorTelefono === providerPhone);
+    const totalForProvider = itemsForProvider.reduce((sum, item) => sum + item.subtotal, 0);
 
     let message = "Hola, acabo de realizar un pedido con los siguientes productos:\n\n";
     itemsForProvider.forEach(item => {
-      message += `${item.nombre} - Cantidad: ${item.cantidad} - Precio: ${item.precio * item.cantidad}\n`;
+      message += `${item.nombre} - Cantidad: ${item.cantidad} - Precio: ${formatPrice(item.subtotal)}\n`;
     });
-    message += `\nTotal del pedido: ${orderDetails.total}\n`;
+    message += `\nTotal a pagar: ${formatPrice(totalForProvider)}\n`;
     message += `ID del pedido: ${orderDetails.id}\n`;
     message += `Fecha del pedido: ${new Date(orderDetails.createdAt).toLocaleString()}`;
 
@@ -140,7 +150,7 @@ const SuccessScreen = () => {
         onClick={() => navigate('/')}
         sx={{ mt: 2 }}
       >
-        Volver a la tienda
+        Ir a la tienda
       </Button>
     </Box>
   );

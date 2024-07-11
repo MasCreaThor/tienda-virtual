@@ -14,7 +14,9 @@ npm install react-bootstrap bootstrap
 - npm install @mui/icons-material
 - npm install react-icons
 - npm install lodash
-- 
+-----
+- npm install react-chartjs-2 chart.js --force
+- npm install react-chartjs-2 chart.js date-fns react-datepicker xlsx --force
 
 
 

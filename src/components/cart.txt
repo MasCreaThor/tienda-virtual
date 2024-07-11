@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import SuccessScreen from './SuccessScreen';
 import ErrorScreen from './ErrorScreen';
 import { ref, onValue, remove, update, get, set, push } from 'firebase/database';
-import { auth, db } from './config/firebaseConfig';
+import { auth, db, storage } from './config/firebaseConfig';
+import { uploadBytes, ref as storageRef, getDownloadURL } from 'firebase/storage';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import {
   Container,
   Table,
@@ -34,7 +36,6 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import Navbar from './Navbar';
 
 import daviplataLogo from './assets/imgBancos/daviplata.png';
 import nequiLogo from './assets/imgBancos/nequi.png';
@@ -84,6 +85,8 @@ const Cart = () => {
     phone: '',
     email: '',
   });
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [paymentProof, setPaymentProof] = useState(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -107,19 +110,22 @@ const Cart = () => {
       const cartData = cartSnapshot.val();
       const productsData = productsSnapshot.val();
 
-      if (cartData) {
+      if (cartData && productsData) {
         const items = Object.entries(cartData).map(([key, value]) => {
           const product = productsData[value.productoId];
-          return { 
-            id: key, 
-            ...value, 
-            nombre: product.nombre,
-            precio: product.precio,
-            colores: product.colores,
-            imagenes: product.imagenes,
-            tallas: product.tallas
-          };
-        });
+          if (product) {
+            return { 
+              id: key, 
+              ...value, 
+              nombre: product.nombre,
+              precio: product.precio,
+              colores: product.colores,
+              imagenes: product.imagenes,
+              tallas: product.tallas
+            };
+          }
+          return null;
+        }).filter(item => item !== null);
         setCartItems(items);
       } else {
         setCartItems([]);
@@ -263,7 +269,7 @@ const Cart = () => {
     return price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' });
   };
 
-  const handlePaymentSubmit = () => {
+  const handlePaymentSubmit = async () => {
     setIsProcessing(true);
     const user = auth.currentUser;
     if (!user) {
@@ -280,6 +286,12 @@ const Cart = () => {
   
     if (!cartItems || cartItems.length === 0) {
       setError("Tu carrito está vacío. No se puede realizar el pedido.");
+      setIsProcessing(false);
+      return;
+    }
+  
+    if (selectedPayment !== 'Contraentrega' && !paymentProof) {
+      setError("Por favor, sube un comprobante de pago.");
       setIsProcessing(false);
       return;
     }
@@ -315,6 +327,13 @@ const Cart = () => {
       return cleanedItem;
     });
   
+    let paymentProofURL = null;
+    if (paymentProof && selectedPayment !== 'Contraentrega') {
+      const fileRef = storageRef(storage, `payment_proofs/${user.uid}_${Date.now()}`);
+      await uploadBytes(fileRef, paymentProof);
+      paymentProofURL = await getDownloadURL(fileRef);
+    }
+  
     const newOrder = {
       userId: user.uid,
       items: cleanedCartItems,
@@ -323,6 +342,7 @@ const Cart = () => {
       paymentMethod: selectedPayment,
       createdAt: Date.now(),
       shippingInfo: newUserInfo.address,
+      paymentProofURL: paymentProofURL,
     };
   
     console.log("Iniciando proceso de pedido");
@@ -330,20 +350,24 @@ const Cart = () => {
     console.log("Datos del pedido:", newOrder);
   
     // Primero, actualizar la información del usuario
-    set(userRef, newUserInfo)
-      .then(() => {
-        // Luego, crear la orden
-        return push(ordersRef, newOrder);
-      })
-      .then(() => {
-        // Finalmente, vaciar el carrito
-        return remove(cartRef);
-      })
-      .then(() => {
+    push(ordersRef, newOrder)
+      .then((newOrderRef) => {
         console.log("Order placed successfully");
-        setModalOpen(false);
-        setCartItems([]);
-        setOrderStatus('success');
+        
+        // Eliminar los productos del carrito
+        remove(cartRef)
+          .then(() => {
+            console.log("Cart cleared successfully");
+            setModalOpen(false);
+            setCartItems([]);
+            setOrderStatus('success');
+            // Redirige a la pantalla de éxito con el ID del pedido
+            navigate(`/success?orderId=${newOrderRef.key}`);
+          })
+          .catch((error) => {
+            console.error("Error clearing cart: ", error);
+            setError(`Error al limpiar el carrito: ${error.message}`);
+          });
       })
       .catch((error) => {
         console.error("Error placing order: ", error);
@@ -373,16 +397,25 @@ const Cart = () => {
   if (error) return <Container><Alert severity="error">{error}</Alert></Container>;
   if (!cartItems || cartItems.length === 0) return (
     <>
-      <Navbar />
+  
       <Container><Alert severity="info">No hay productos en tu carrito de compras.</Alert></Container>
     </>
   );
 
   return (
     <>
-      <Navbar />
+
+     
+      <hr></hr>
+      <br></br>
+
       <Container maxWidth="lg" translate="no">
-        <Typography variant="h4" gutterBottom>Tu Carrito de Compras</Typography>
+        
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><h4>TUㅤ </h4>
+      <ShoppingCartIcon sx={{ ml: 1, color: 'green' }} /><h4>ㅤDE COMPRAS</h4>
+     
+    </div>
+    <hr></hr>
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -397,7 +430,7 @@ const Cart = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {cartItems.map((item) => (
+            {cartItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell translate="no">
                     <Box display="flex" alignItems="center">
@@ -411,7 +444,7 @@ const Cart = () => {
                       />
                       <Typography>{item.nombre}</Typography>
                     </Box>
-                  </TableCell>
+                    </TableCell>
                   <TableCell translate="no">
                     <FormControl fullWidth>
                       <Select
@@ -446,6 +479,8 @@ const Cart = () => {
                       >
                         <RemoveIcon />
                       </Button>
+                      <Button disabled>{item.cantidad}</Button>
+
                       <Button onClick={() => handleQuantityChange(item.id, 1)}>
                         <AddIcon />
                       </Button>
@@ -463,102 +498,7 @@ const Cart = () => {
             </TableBody>
           </Table>
         </TableContainer>
-        
-        <Grid container spacing={3} mt={4}>
-          <Grid item xs={12} md={7}>
-            <Typography variant="h6" gutterBottom>Selecciona un método de pago</Typography>
-            <PaymentOption
-              name="Daviplata"
-              logo={daviplataLogo}
-              isSelected={selectedPayment === 'Daviplata'}
-              onClick={() => setSelectedPayment('Daviplata')}
-            >
-              <Box bgcolor="#e3001b" color="white" p={2} borderRadius={1}>
-                <Typography variant="h6">Paga con Daviplata</Typography>
-                <Typography>Escanee nuestro QR con su aplicación Daviplata, o agregue nuestro número celular a sus contactos y realice su pago con Daviplata.</Typography>
-                <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography>AHORRO PESOS</Typography>
-                    <Typography variant="h6">191-999999999-999</Typography>
-                    <Typography>CC PESOS</Typography>
-                    <Typography variant="h6">0021-9999-9999-99999999</Typography>
-                  </Box>
-                  <Box width="150px" height="150px" bgcolor="white">
-                    <img src={daviplataQR} alt="Daviplata QR" style={{width: '100%', height: '100%'}} />
-                  </Box>
-                </Box>
-                <Button variant="contained" color="inherit" fullWidth style={{marginTop: '10px', color: '#e3001b'}} onClick={() => setModalOpen(true)}>
-                  Realizar Pedido
-                </Button>
-              </Box>
-            </PaymentOption>
-            
-            <PaymentOption
-              name="Nequi"
-              logo={nequiLogo}
-              isSelected={selectedPayment === 'Nequi'}
-              onClick={() => setSelectedPayment('Nequi')}
-            >
-              <Box bgcolor="#210049" color="white" p={2} borderRadius={1}>
-                <Typography variant="h6">Paga con Nequi</Typography>
-                <Typography>Escanee nuestro QR con su aplicación Nequi, o agregue nuestro número celular a sus contactos y realice su pago con Nequi.</Typography>
-                <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography>Empresa: Solution Maker</Typography>
-                    <Typography>NIT: 1042746451</Typography>
-                    <Typography>Celular: 99999999</Typography>
-                  </Box>
-                  <Box width="150px" height="150px" bgcolor="white">
-                    <img src={nequiQR} alt="Nequi QR" style={{width: '100%', height: '100%'}} />
-                  </Box>
-                </Box>
-                <Button variant="contained" color="inherit" fullWidth style={{marginTop: '10px', color: '#210049'}} onClick={() => setModalOpen(true)}>
-                  Realizar Pedido
-                </Button>
-              </Box>
-            </PaymentOption>
-            
-            <PaymentOption
-              name="Bancolombia"
-              logo={bancolombiaLogo}
-              isSelected={selectedPayment === 'Bancolombia'}
-              onClick={() => setSelectedPayment('Bancolombia')}
-            >
-              <Box bgcolor="#ffd100" color="black" p={2} borderRadius={1}>
-                <Typography variant="h6">Paga con Bancolombia</Typography>
-                <Typography>Escanee nuestro QR con su aplicación Bancolombia, o agregue nuestro número celular a sus contactos y realice su pago con Bancolombia.</Typography>
-                <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
-                  <Box>
-                    <Typography>AHORRO PESOS</Typography>
-                    <Typography variant="h6">191-999999999-999</Typography>
-                    <Typography>CC PESOS</Typography>
-                    <Typography variant="h6">0021-9999-9999-99999999</Typography>
-                  </Box>
-                  <Box width="150px" height="150px" bgcolor="white">
-                    <img src={bancolombiaQR} alt="Bancolombia QR" style={{width: '100%', height: '100%'}} />
-                  </Box>
-                </Box>
-                <Button variant="contained" color="inherit" fullWidth style={{marginTop: '10px', color: '#ffd100', backgroundColor: 'black'}} onClick={() => setModalOpen(true)}>
-                  Realizar Pedido
-                </Button>
-              </Box>
-            </PaymentOption>
 
-            <PaymentOption
-              name="Pago Contraentrega"
-              isSelected={selectedPayment === 'Contraentrega'}
-              onClick={() => setSelectedPayment('Contraentrega')}
-            >
-              <Box bgcolor="#4CAF50" color="white" p={2} borderRadius={1}>
-                <Typography variant="h6">Pago Contraentrega</Typography>
-                <Typography>Paga cuando recibas tu pedido. Este método es seguro y conveniente.</Typography>
-                <Button variant="contained" color="inherit" fullWidth style={{marginTop: '10px', color: '#4CAF50'}} onClick={() => setModalOpen(true)}>
-                  Realizar Pedido
-                </Button>
-              </Box>
-            </PaymentOption>
-          </Grid>
-          
           <Grid item xs={12} md={5}>
             <Paper 
               elevation={3} 
@@ -570,7 +510,7 @@ const Cart = () => {
               }}
             >
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Resumen del pedido
+               
               </Typography>
               <Divider sx={{ my: 2 }} />
               
@@ -600,7 +540,7 @@ const Cart = () => {
                 justifyContent="space-between" 
                 alignItems="center"
               >
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Total</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Total a pagar</Typography>
                 <Typography 
                   variant="h6" 
                   sx={{ 
@@ -610,11 +550,127 @@ const Cart = () => {
                 >
                   {formatPrice(calculateTotal(cartItems))}
                 </Typography>
+              
               </Box>
+              
             </Paper>
+            
           </Grid>
-        </Grid>
+          <Grid container spacing={3} mt={4}>
+          <Grid item xs={12} md={7}>
+            {!showPaymentOptions ? (
+              <Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
+                  onClick={() => {
+                    setShowPaymentOptions(true);
+                    setSelectedPayment(null);
+                  }}
+                  sx={{ mb: 2 }}
+                >
+                  Pagar pedido
+                </Button>
+                <Button
+  variant="contained"
+  style={{ backgroundColor: '#00D157', color: 'white' }}
+  fullWidth
+  onClick={() => {
+    setSelectedPayment('Contraentrega');
+    setModalOpen(true);
+  }}
+>
+  Pagar contraentrega
+</Button>
 
+              </Box>
+            ) : (
+              <>
+                <Typography variant="h6" gutterBottom>Selecciona un método de pago</Typography>
+                <PaymentOption
+                  name="Daviplata"
+                  logo={daviplataLogo}
+                  isSelected={selectedPayment === 'Daviplata'}
+                  onClick={() => setSelectedPayment('Daviplata')}
+                >
+                  <Box bgcolor="#e3001b" color="white" p={2} borderRadius={1}>
+                    <Typography variant="h6">Paga con Daviplata</Typography>
+                    <Typography>Escanee nuestro QR con su aplicación Daviplata, o agregue nuestro número celular a sus contactos y realice su pago con Daviplata.</Typography>
+                    <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
+                      <Box>
+                        <Typography>AHORRO PESOS</Typography>
+                        <Typography variant="h6">191-999999999-999</Typography>
+                        <Typography>CC PESOS</Typography>
+                        <Typography variant="h6">0021-9999-9999-99999999</Typography>
+                      </Box>
+                      <Box width="150px" height="150px" bgcolor="white">
+                        <img src={daviplataQR} alt="Daviplata QR" style={{width: '100%', height: '100%'}} />
+                      </Box>
+                    </Box>
+                    <Button variant="contained" color="inherit" fullWidth style={{marginTop: '10px', color: '#e3001b'}} onClick={() => setModalOpen(true)}>
+                      Realizar Pedido
+                    </Button>
+                  </Box>
+                </PaymentOption>
+                
+                <PaymentOption
+                  name="Nequi"
+                  logo={nequiLogo}
+                  isSelected={selectedPayment === 'Nequi'}
+                  onClick={() => setSelectedPayment('Nequi')}
+                >
+                  <Box bgcolor="#210049" color="white" p={2} borderRadius={1}>
+                    <Typography variant="h6">Paga con Nequi</Typography>
+                    <Typography>Escanee nuestro QR con su aplicación Nequi, o agregue nuestro número celular a sus contactos y realice su pago con Nequi.</Typography>
+                    <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
+                      <Box>
+                        <Typography>Empresa: Solution Maker</Typography>
+                        <Typography>NIT: 1042746451</Typography>
+                        <Typography>Celular: 99999999</Typography>
+                      </Box>
+                      <Box width="150px" height="150px" bgcolor="white">
+                        <img src={nequiQR} alt="Nequi QR" style={{width: '100%', height: '100%'}} />
+                      </Box>
+                    </Box>
+                    <Button variant="contained" color="inherit" fullWidth style={{marginTop: '10px', color: '#210049'}} onClick={() => setModalOpen(true)}>
+                      Realizar Pedido
+                    </Button>
+                  </Box>
+                </PaymentOption>
+                
+                <PaymentOption
+                  name="Bancolombia"
+                  logo={bancolombiaLogo}
+                  isSelected={selectedPayment === 'Bancolombia'}
+                  onClick={() => setSelectedPayment('Bancolombia')}
+                >
+                  <Box bgcolor="#ffd100" color="black" p={2} borderRadius={1}>
+                    <Typography variant="h6">Paga con Bancolombia</Typography>
+                    <Typography>Escanee nuestro QR con su aplicación Bancolombia, o agregue nuestro número celular a sus contactos y realice su pago con Bancolombia.</Typography>
+                    <Box mt={2} display="flex" justifyContent="space-between" alignItems="center">
+                      <Box>
+                        <Typography>AHORRO PESOS</Typography>
+                        <Typography variant="h6">191-999999999-999</Typography>
+                        <Typography>CC PESOS</Typography>
+                        <Typography variant="h6">0021-9999-9999-99999999</Typography>
+                      </Box>
+                      <Box width="150px" height="150px" bgcolor="white">
+                        <img src={bancolombiaQR} alt="Bancolombia QR" style={{width: '100%', height: '100%'}} />
+                      </Box>
+                    </Box>
+                    <Button variant="contained" color="inherit" fullWidth style={{marginTop: '10px', color: '#ffd100', backgroundColor: 'black'}} onClick={() => setModalOpen(true)}>
+                      Realizar Pedido
+                    </Button>
+                  </Box>
+                </PaymentOption>
+              </>
+            )}
+          </Grid>
+          </Grid>
+          <hr></hr>
+          <br></br>
+          
         <Modal
           open={modalOpen}
           onClose={() => setModalOpen(false)}
@@ -753,12 +809,39 @@ const Cart = () => {
                   onChange={(e) => setUserInfo({...userInfo, email: e.target.value})}
                 />
               </Grid>
+              {selectedPayment !== 'Contraentrega' && (
+                <Grid item xs={12}>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="raised-button-file"
+                    type="file"
+                    onChange={(e) => setPaymentProof(e.target.files[0])}
+                    required
+                  />
+                  <label htmlFor="raised-button-file">
+                    <Button variant="contained" component="span">
+                      Subir comprobante de pago
+                    </Button>
+                  </label>
+                  {paymentProof && (
+                    <Typography variant="body2" mt={1}>
+                      Archivo seleccionado: {paymentProof.name}
+                    </Typography>
+                  )}
+                  {!paymentProof && (
+                    <Typography variant="body2" color="error" mt={1}>
+                      *El comprobante de pago es obligatorio
+                    </Typography>
+                  )}
+                </Grid>
+              )}
               <Grid item xs={12}>
                 <Button
                   fullWidth
                   variant="contained"
                   onClick={handlePaymentSubmit}
-                  disabled={isProcessing}
+                  disabled={isProcessing || (selectedPayment !== 'Contraentrega' && !paymentProof)}
                 >
                   {isProcessing ? 'Procesando...' : 'Confirmar Pedido'}
                 </Button>
